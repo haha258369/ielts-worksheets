@@ -203,6 +203,8 @@ footer p { margin: 4px 0; }
 .mc label { position: relative; display: block; }
 .mc input { position: absolute; opacity: 0; inset: 0; }
 .mc span { display: block; padding: 8px 14px; border: 2px solid var(--ink); border-radius: 14px; font-size: 15px; background: #fff; }
+.mc.row { display: flex; flex-wrap: wrap; gap: 8px; }
+.mc.row span { padding: 8px 16px; }
 .mc input:checked + span { background: var(--ink); color: #fff; }
 .bank { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 8px 0 12px; padding: 10px 14px; border: 2px dashed var(--ink); border-radius: 14px; font-weight: 700; }
 
@@ -400,6 +402,14 @@ footer p { margin: 4px 0; }
           <div class="mc" role="radiogroup" aria-label="Question ${q.n}">${Object.entries(q.o).map(([k, v]) => `<label><input type="radio" name="q${q.n}" value="${k}"><span><b>${k}</b> ${esc(v)}</span></label>`).join('')}</div>
           ${qact(q)}</div>`).join('') + setact(set) + '</div>';
     }
+    if (set.t === 'MatchFeat') {
+      const keys = Object.keys(set.opts);
+      return head + `<p class="instr">${esc(set.title)}. Choose the correct letter, <b>${keys[0]}–${keys[keys.length - 1]}</b>.</p>
+        <div class="bank">${keys.map(k => `<span><b>${k}</b> ${esc(set.opts[k])}</span>`).join('')}</div>`
+        + qs.map(q => `<div class="q" id="q${q.n}" data-n="${q.n}"><div class="qt"><span class="qn">${q.n}</span><span>${esc(q.q)}</span><span class="mk"></span></div>
+          <div class="mc row" role="radiogroup" aria-label="Question ${q.n}">${keys.map(k => `<label><input type="radio" name="q${q.n}" value="${k}"><span><b>${k}</b></span></label>`).join('')}</div>
+          ${qact(q)}</div>`).join('') + setact(set) + '</div>';
+    }
     if (set.t === 'TFNG' || set.t === 'YNNG') {
       const yn = set.t === 'YNNG', opts = yn ? ['YES', 'NO', 'NOT GIVEN'] : ['TRUE', 'FALSE', 'NOT GIVEN'];
       const instr = yn ? `Do the statements agree with the views of the writer? Choose<br><b>YES</b> if the statement agrees with the writer · <b>NO</b> if the statement contradicts the writer · <b>NOT GIVEN</b> if it is impossible to say what the writer thinks about this.`
@@ -466,7 +476,7 @@ footer p { margin: 4px 0; }
   }
 
   /* ---------- questions ---------- */
-  const isRadio = t => t === 'TFNG' || t === 'YNNG' || t === 'MCQ';
+  const isRadio = t => t === 'TFNG' || t === 'YNNG' || t === 'MCQ' || t === 'MatchFeat';
   function readQ(n) {
     const q = $('#q' + n);
     if (isRadio(W.Q[n].t)) { const r = $('input:checked', q); return r ? r.value : ''; }
@@ -485,7 +495,7 @@ footer p { margin: 4px 0; }
       const lim = Q.limit; if (lim && a.split(' ').filter(w => !/^\d+$/.test(w)).length > lim) note += ` Remember: ${W.sets.find(s => n >= s.n[0] && n <= s.n[1]).rule}.`;
     }
     const L = Q.walk || {};
-    fb.innerHTML = `<p class="res">${ok ? '✓ Correct!' : `✗ Not quite. Answer: ${esc(Q.a[0])}${Q.t === 'MCQ' ? '. ' + esc(Q.o[Q.a[0]]) : ''}${Q.a.length > 1 && Q.t !== 'SumComp' ? ` (or ${esc(Q.a.slice(1).join(', '))})` : ''}.${note}`}</p>
+    fb.innerHTML = `<p class="res">${ok ? '✓ Correct!' : `✗ Not quite. Answer: ${esc(Q.a[0])}${Q.t === 'MCQ' || Q.t === 'MatchFeat' ? '. ' + esc(Q.o[Q.a[0]]) : ''}${Q.a.length > 1 && Q.t !== 'SumComp' ? ` (or ${esc(Q.a.slice(1).join(', '))})` : ''}.${note}`}</p>
       <p>${esc(Q.why)}</p>
       ${L.loc ? `<p><span class="tag loc">Locate</span>“${esc(L.loc.q)}”${L.loc.p && L.loc.p !== L.loc.q ? ` → “${esc(L.loc.p)}”` : ''}</p>` : ''}
       ${L.dec ? `<p><span class="tag dec">Decide</span>“${esc(L.dec.q)}”${L.dec.p ? ` → “${esc(L.dec.p)}”` : ' → nothing in the text'}</p>` : ''}
